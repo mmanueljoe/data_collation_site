@@ -114,7 +114,7 @@ DATABASES = {
 
 
         'NAME': os.getenv('DATABASE_NAME','datacollation_db'),
-        'USER': os.getenv('DATABASE_USER', 'root'),
+        'USER': os.getenv('DATABASE_USER', 'mysql'),
         'PASSWORD': os.getenv('DATABASE_PASSWORD', 'root'),
         'HOST': os.getenv('DATABASE_HOST', 'dataCollationHost'),
         'PORT': os.getenv('DATABASE_PORT', '3309'),
