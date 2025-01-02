@@ -104,7 +104,7 @@ DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': BASE_DIR / 'db.sqlite3',
-        # 'ENGINE': 'django.db.backends.mysql',
+        'ENGINE': 'django.db.backends.mysql',
         # 'NAME': 'datacollation_db',
         # 'USER': 'root',
         # 'PASSWORD': '1718',
@@ -209,10 +209,10 @@ USE_TZ = True
 STATIC_URL = '/static/'
 
 # For production, add these to correctly locate and serve static files:
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),  # Add the path to your 'static' directory
+    BASE_DIR / 'static',  # Assuming static files are in a directory named 'static' in the project root
 ]
 
 # Default primary key field type
