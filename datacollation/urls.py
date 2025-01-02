@@ -33,6 +33,7 @@ urlpatterns = [
     # Monitor views
     path('monitor/login/', views.monitor_login, name='monitor_login'),
     path('monitor/dashboard/', views.monitor_dashboard, name='monitor_dashboard'),
+    path('monitor/search-api/', views.monitor_search_api, name='monitor_search_api'),
     path('monitor/edit_member/<int:id>/', views.edit_member, name='edit_member'),
     path('monitor/delete_member/<int:id>/', views.delete_member, name='delete_member'),
     path('monitor/export_pdf/', views.export_pdf, name='export_pdf'),

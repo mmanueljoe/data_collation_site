@@ -40,7 +40,7 @@ COPY . /datacollation/
 RUN python manage.py collectstatic --noinput
 
 # Expose the port the app will run on
-EXPOSE 6000
+EXPOSE 8003
 
 # Command to run the app with Gunicorn (Django production server)
-CMD ["gunicorn", "datacollation.wsgi:application", "--bind", "0.0.0.0:6000", "--workers", "3"]
+CMD ["gunicorn", "datacollation.wsgi:application", "--bind", "0.0.0.0:8003", "--workers", "3"]

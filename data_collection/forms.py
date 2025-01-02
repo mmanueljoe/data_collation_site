@@ -63,7 +63,7 @@ class MemberDetailsForm(forms.ModelForm):
             'phone_number': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your phone number'}),
             'photo': forms.ClearableFileInput(attrs={'class': 'form-control'}),
             'address': forms.Textarea(attrs={'class': 'form-control', 'rows': 3, 'placeholder': 'Enter your address'}),
-            'occupation': forms.Select(attrs={'class': 'form-control'}),
+            'occupation': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your occupation'}),
             'education_background': forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'Enter your education background'}),
             'birthdate': forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'ndc_membership_status': forms.Select(choices=[('yes', 'Yes'), ('no', 'No')], attrs={'class': 'form-control'}),
@@ -72,7 +72,13 @@ class MemberDetailsForm(forms.ModelForm):
         }
 
     def clean_phone_number(self):
-        phone_number = self.cleaned_data.get('phone_number')
-        if not phone_number.isdigit() or len(phone_number) not in [10, 12]:
-            raise forms.ValidationError("Enter a valid phone number.")
+        phone_number = self.cleaned_data.get('phone_number', '')  # Default to an empty string if None
+
+        if not phone_number:  # Check if the phone_number is empty
+            raise forms.ValidationError("This field is required.")
+        
+        if not phone_number.isdigit():  # Only check for digits if it's not empty
+            raise forms.ValidationError("Please enter a valid phone number.")
+
         return phone_number
+

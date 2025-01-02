@@ -30,69 +30,15 @@ from xhtml2pdf import pisa
 from django.http import HttpResponse
 from django.template.loader import get_template
 import logging
+from django.http import JsonResponse
+from django.shortcuts import render
+from django.db.models import Q
+from django.core.paginator import Paginator
+from .models import Member
 
 
 logger = logging.getLogger(__name__)
 
-# def member_login(request):
-#     if request.method == 'POST':
-#         form = MemberLoginForm(request.POST)
-#         if form.is_valid():
-#             agent_code = form.cleaned_data['agent_code']
-#             password = form.cleaned_data['password']
-#             try:
-#                 member = Member.objects.get(agent_code=agent_code)
-#                 if member.check_password(password):
-#                     login(request, member, backend='data_collection.auth_backends.AgentCodeBackend')
-#                     return redirect('member_dashboard')
-#                 else:
-#                     logger.debug("Password incorrect for agent_code: %s", agent_code)
-#                     messages.error(request, 'Invalid agent code or password.')
-#             except Member.DoesNotExist:
-#                 logger.debug("Agent code not found: %s", agent_code)
-#                 messages.error(request, 'Invalid agent code or password.')
-#         else:
-#             logger.debug("Form is invalid: %s", form.errors)
-#     else:
-#         form = MemberLoginForm()
-
-#     return render(request, 'member_login.html', {'form': form})
-
-
-from django.contrib.messages import constants as message_constants
-
-# def member_login(request):
-#     if request.method == 'POST':
-#         form = MemberLoginForm(request.POST)
-#         if form.is_valid():
-#             agent_code = form.cleaned_data['agent_code']
-#             password = form.cleaned_data['password']
-#             try:
-#                 member = Member.objects.get(agent_code=agent_code)
-#                 if member.check_password(password):
-#                     login(request, member, backend='data_collection.auth_backends.AgentCodeBackend')
-#                     return redirect('member_dashboard')
-#                 else:
-#                     messages.error(request, 'Invalid agent code or password.')
-#             except Member.DoesNotExist:
-#                 messages.error(request, 'Invalid agent code or password.')
-#         else:
-#             # Log and display form errors
-#             logger.debug("Form errors: %s", form.errors)
-#             for field, errors in form.errors.items():
-#                 for error in errors:
-#                     messages.error(request, f"{field}: {error}")
-#     else:
-#         form = MemberLoginForm()
-
-#     return render(request, 'member_login.html', {'form': form})
-
-
-from django.contrib import messages
-from django.shortcuts import render, redirect
-import logging
-
-logger = logging.getLogger(__name__)
 
 def member_login(request):
     if request.method == 'POST':
@@ -192,6 +138,7 @@ def member_dashboard(request):
         form = MemberDetailsForm(request.POST, request.FILES, instance=member)
         if form.is_valid():
             form.save()  # Save the updated member details
+            messages.success(request, "Your details have been successfully updated!")  # Add success message
             return redirect('member_dashboard')  # Redirect to the dashboard after saving
     else:
         form = MemberDetailsForm(instance=member)
@@ -228,16 +175,55 @@ def monitor_dashboard(request):
     page_number = request.GET.get('page')
     members_page = paginator.get_page(page_number)
 
-    # For dropdown filters
     occupations = Member.objects.values_list('occupation', flat=True).distinct()
+
+    # Get age group distribution and convert keys/values to lists
+    age_distribution = get_age_distribution(members)
+    age_groups = {
+        'keys': list(age_distribution.keys()),
+        'values': list(age_distribution.values()),
+    }
 
     return render(request, 'monitor_dashboard.html', {
         'members': members_page,
         'occupations': occupations,
-        'age_groups': get_age_distribution(members),
+        'age_groups': age_groups,
         'ndc_count': members.filter(ndc_membership_status=True).count(),
         'non_ndc_count': members.filter(ndc_membership_status=False).count(),
     })
+
+@login_required
+def monitor_search_api(request):
+    try:
+        search_query = request.GET.get('search', '').strip()
+        occupation_filter = request.GET.get('occupation', '').strip()
+        ndc_filter = request.GET.get('ndc_membership_status', '').strip()
+
+        members = Member.objects.all()
+
+        if search_query:
+            members = members.filter(
+                Q(first_name__icontains=search_query) |
+                Q(last_name__icontains=search_query) |
+                Q(email__icontains=search_query) |
+                Q(phone_number__icontains=search_query)
+            )
+
+        if occupation_filter:
+            members = members.filter(occupation__iexact=occupation_filter)
+
+        if ndc_filter in ('0', '1'):
+            members = members.filter(ndc_membership_status=(ndc_filter == '1'))
+
+        member_data = list(members.values(
+            'id', 'first_name', 'last_name', 'phone_number', 'email', 'age', 'ndc_membership_status'
+        ))
+        return JsonResponse({'members': member_data})
+    except Exception as e:
+        print(f"Error: {e}")
+        return JsonResponse({'error': 'Something went wrong.'}, status=500)
+
+
 
 @login_required
 def export_excel(request):
@@ -328,31 +314,23 @@ def monitor_logout(request):
     return redirect('monitor_login')  
 
 
+
+
 def get_age_distribution(members):
-    """
-    Calculate the distribution of members in different age groups.
-    :param members: QuerySet of Member objects.
-    :return: A dictionary with age group labels as keys and counts as values.
-    """
-    age_groups = defaultdict(int)
-    current_year = date.today().year
-
+    age_groups = {"18-25": 0, "26-35": 0, "36-45": 0, "46-60": 0, "60+": 0}
     for member in members:
-        if member.birthdate:
-            age = current_year - member.birthdate.year
-            if age < 18:
-                age_groups['Under 18'] += 1
-            elif 18 <= age < 30:
-                age_groups['18-29'] += 1
-            elif 30 <= age < 45:
-                age_groups['30-44'] += 1
-            elif 45 <= age < 60:
-                age_groups['45-59'] += 1
-            else:
-                age_groups['60+'] += 1
-
-    # Return as a dictionary sorted by age group labels
-    return {
-        'keys': list(age_groups.keys()),
-        'values': list(age_groups.values())
-    }
+        if member.age is None:  # Skip members without a birthdate
+            continue
+        elif member.age < 18:
+            continue
+        elif member.age <= 25:
+            age_groups["18-25"] += 1
+        elif member.age <= 35:
+            age_groups["26-35"] += 1
+        elif member.age <= 45:
+            age_groups["36-45"] += 1
+        elif member.age <= 60:
+            age_groups["46-60"] += 1
+        else:
+            age_groups["60+"] += 1
+    return dict(Counter(age_groups))

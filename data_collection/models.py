@@ -2,8 +2,7 @@ from django.db import models
 import random
 import string
 from django.contrib.auth.hashers import make_password, check_password
-
-from django.contrib.auth.hashers import make_password, check_password
+from datetime import date
 
 class Member(models.Model):
     agent_code = models.CharField(max_length=10, unique=True)
@@ -27,6 +26,16 @@ class Member(models.Model):
     @property
     def is_authenticated(self):
         return True
+    
+    @property
+    def age(self):
+        if self.birthdate:
+            today = date.today()
+            age = today.year - self.birthdate.year
+            if today.month < self.birthdate.month or (today.month == self.birthdate.month and today.day < self.birthdate.day):
+                age -= 1
+            return age
+        return None
 
     def generate_agent_code(self):
         while True:

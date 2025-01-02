@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% load static %}
-{% load custom_filters%}
+{% load custom_filters %}
+
 {% block content %}
 <div class="container py-5 d-flex justify-content-center align-items-center vh-100">
     <div 
@@ -14,6 +15,16 @@
             </h2>
             <p class="text-muted">Please update your details below:</p>
         </div>
+
+        <!-- Success Message -->
+        {% if messages %}
+            <div class="alert alert-success alert-dismissible fade show" role="alert">
+                {% for message in messages %}
+                    <i class="bi bi-check-circle"></i> {{ message }}
+                {% endfor %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endif %}
 
         <!-- Form -->
         <form method="post" enctype="multipart/form-data">

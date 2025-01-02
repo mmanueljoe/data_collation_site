@@ -25,12 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-g#ezbrxlfhl#$*g#r7wq6_k$@o!h5=yynh*dx6lmz3)pb(%hyw'
+SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DJANGO_DEBUG') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS').split(',') # []
 
 
 # Application definition
@@ -43,7 +43,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'crispy_forms',
-    'bootstrap5',
+    'django_bootstrap5',
     'import_export',
     'django.contrib.humanize',  # For better UI numbers
     'data_collection',  # Custom app for data collection
@@ -104,15 +104,29 @@ DATABASES = {
     'default': {
         # 'ENGINE': 'django.db.backends.sqlite3',
         # 'NAME': BASE_DIR / 'db.sqlite3',
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'datacollation_db',
-        'USER': 'root',
-        'PASSWORD': '1718',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        # 'ENGINE': 'django.db.backends.mysql',
+        # 'NAME': 'datacollation_db',
+        # 'USER': 'root',
+        # 'PASSWORD': '1718',
+        # 'HOST': 'localhost',
+        # 'PORT': '3306',
+
+
+
+        'NAME': os.getenv('DATABASE_NAME','datacollation_db'),
+        'USER': os.getenv('DATABASE_USER', 'root'),
+        'PASSWORD': os.getenv('DATABASE_PASSWORD', 'root'),
+        'HOST': os.getenv('DATABASE_HOST', 'dataCollationHost'),
+        'PORT': os.getenv('DATABASE_PORT', '3309'),
     }
 }
 
+
+# Allow your domain and subdomain
+CSRF_TRUSTED_ORIGINS = [
+    'https://parliamentaryrtc.site',
+    'https://www.parliamentaryrtc.site',
+]
 
 
 # Session settings (ensure session engine is set to use database-backed sessions)
@@ -122,16 +136,16 @@ SESSION_COOKIE_NAME = 'sessionid'
   # Custom user model for admins
 
 
-STATIC_URL = '/static/'
+# STATIC_URL = '/static/'
 
-# If using additional folders for static files, include them like this:
-STATICFILES_DIRS = [
-    BASE_DIR / "static",
-]
+# # If using additional folders for static files, include them like this:
+# STATICFILES_DIRS = [
+#     BASE_DIR / "static",
+# ]
 
-# In production, Django needs to know where to collect static files
-# If you're using `collectstatic` in production, set this:
-STATIC_ROOT = BASE_DIR / "staticfiles"
+# # In production, Django needs to know where to collect static files
+# # If you're using `collectstatic` in production, set this:
+# STATIC_ROOT = BASE_DIR / "staticfiles"
 
 
 MEDIA_URL = '/media/'
@@ -154,10 +168,7 @@ EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Crispy Forms settings
 CRISPY_TEMPLATE_PACK = 'bootstrap4'
 
-CSRF_COOKIE_NAME = 'csrftoken'
-CSRF_COOKIE_HTTPONLY = False  # Set this to False for debugging
-CSRF_COOKIE_SECURE = False    # Make sure this is False in development
-CSRF_TRUSTED_ORIGINS = ['http://127.0.0.1', 'http://localhost']
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
@@ -193,7 +204,16 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+
+
+STATIC_URL = '/static/'
+
+# For production, add these to correctly locate and serve static files:
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, 'static'),  # Add the path to your 'static' directory
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field

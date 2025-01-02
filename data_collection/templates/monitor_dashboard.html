@@ -68,46 +68,49 @@
         </form>
     </div>
 
-    <!-- Members Table -->
-    <div class="card shadow-sm p-4">
-        <h5><i class="bi bi-table"></i> Member Details</h5>
-        <div class="table-responsive">
-            <table class="table table-hover">
-                <thead class="table-light">
-                    <tr>
-                        <th><i class="bi bi-person"></i> Name</th>
-                        <th><i class="bi bi-telephone"></i> Phone</th>
-                        <th><i class="bi bi-envelope"></i> Email</th>
-                        <th><i class="bi bi-calendar"></i> Age</th>
-                        <th><i class="bi bi-person-badge"></i> Party Member</th>
-                        <th><i class="bi bi-gear"></i> Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for member in members %}
-                    <tr>
-                        <td>{{ member.first_name }} {{ member.last_name }}</td>
-                        <td>{{ member.phone_number }}</td>
-                        <td>{{ member.email }}</td>
-                        <td>{{ member.age }}</td>
-                        <td>{{ member.ndc_membership_status|yesno:"Yes,No" }}</td>
-                        <td>
-                            <a href="{% url 'edit_member' member.id %}" class="btn btn-sm btn-warning">
-                                <i class="bi bi-pencil-square"></i> Edit
-                            </a>
-                            <a href="{% url 'delete_member' member.id %}" class="btn btn-sm btn-danger">
-                                <i class="bi bi-trash"></i> Delete
-                            </a>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="6" class="text-center">No members found.</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
+   
+        <!-- Members Table -->
+        <div class="card shadow-sm p-4">
+            <h5><i class="bi bi-table"></i> Member Details</h5>
+            <div class="table-responsive">
+                <table class="table table-hover" id="members-table">
+                    <thead class="table-light">
+                        <tr>
+                            <th><i class="bi bi-person"></i> Name</th>
+                            <th><i class="bi bi-telephone"></i> Phone</th>
+                            <th><i class="bi bi-envelope"></i> Email</th>
+                            <th><i class="bi bi-calendar"></i> Age</th>
+                            <th><i class="bi bi-person-badge"></i> Party Member</th>
+                            <th><i class="bi bi-gear"></i> Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody id="members-body">
+                        {% for member in members %}
+                        <tr>
+                            <td>{{ member.first_name }} {{ member.last_name }}</td>
+                            <td>{{ member.phone_number }}</td>
+                            <td>{{ member.email }}</td>
+                            <td>{{ member.age }}</td>
+                            <td>{{ member.ndc_membership_status|yesno:"Yes,No" }}</td>
+                            <td>
+                                <a href="{% url 'edit_member' member.id %}" class="btn btn-sm btn-warning">
+                                    <i class="bi bi-pencil-square"></i> Edit
+                                </a>
+                                <a href="{% url 'delete_member' member.id %}" class="btn btn-sm btn-danger">
+                                    <i class="bi bi-trash"></i> Delete
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center">No members found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
         </div>
+
 
         <!-- Pagination -->
         <nav class="mt-3">
@@ -146,9 +149,11 @@
     </div>
 </div>
 
-<script id="age-groups-keys" type="application/json">{{ age_groups.keys|json_script }}</script>
-<script id="age-groups-values" type="application/json">{{ age_groups.values|json_script }}</script>
+<script id="age-groups-keys" type="application/json">{{ age_groups.keys|json_script:"age-keys" }}</script>
+<script id="age-groups-values" type="application/json">{{ age_groups.values|json_script:"age-values" }}</script>
 <script id="membership-data" type="application/json">{{ ndc_count }}, {{ non_ndc_count }}</script>
+
+
 
 <script>
     // Age Group Chart
@@ -196,5 +201,70 @@
             responsive: true,
         }
     });
+
+
+    
+   <!-- for search logic -->
+   document.addEventListener("DOMContentLoaded", function () {
+    const searchInput = document.querySelector('input[name="search"]');
+    const membersBody = document.getElementById("members-body");
+    const occupationFilter = document.querySelector('select[name="occupation"]');
+    const ndcFilter = document.querySelector('select[name="ndc_membership_status"]');
+
+    function fetchMembers() {
+        const search = searchInput.value.trim();
+        const occupation = occupationFilter.value.trim();
+        const ndcMembershipStatus = ndcFilter.value.trim();
+
+        const url = new URL('/monitor/search-api/', window.location.origin);
+        url.searchParams.append('search', search);
+        url.searchParams.append('occupation', occupation);
+        url.searchParams.append('ndc_membership_status', ndcMembershipStatus);
+
+        fetch(url)
+            .then(response => {
+                console.log("Response status:", response.status);
+                if (!response.ok) throw new Error("Network response was not ok");
+                return response.json();
+            })
+            .then(data => {
+                console.log("Fetched data:", data);
+                membersBody.innerHTML = ""; // Clear existing rows
+
+                if (data.members && data.members.length > 0) {
+                    data.members.forEach(member => {
+                        membersBody.innerHTML += `
+                            <tr>
+                                <td>${member.first_name} ${member.last_name}</td>
+                                <td>${member.phone_number}</td>
+                                <td>${member.email}</td>
+                                <td>${member.age}</td>
+                                <td>${member.ndc_membership_status ? "Yes" : "No"}</td>
+                                <td>
+                                    <a href="/edit-member/${member.id}/" class="btn btn-sm btn-warning">Edit</a>
+                                    <a href="/delete-member/${member.id}/" class="btn btn-sm btn-danger">Delete</a>
+                                </td>
+                            </tr>
+                        `;
+                    });
+                } else {
+                    membersBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center">No members found.</td>
+                        </tr>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error("Error fetching members:", error);
+            });
+    }
+
+    searchInput.addEventListener("input", fetchMembers);
+    occupationFilter.addEventListener("change", fetchMembers);
+    ndcFilter.addEventListener("change", fetchMembers);
+});
+
+
 </script>
 {% endblock %}
