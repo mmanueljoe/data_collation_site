@@ -30,7 +30,7 @@ SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DJANGO_DEBUG') == 'True'
 
-ALLOWED_HOSTS = os.getenv('DJANGO_ALLOWED_HOSTS').split(',') # []
+ALLOWED_HOSTS =  ['parliamentaryrtc.site', 'www.parliamentaryrtc.site', '127.0.0.1', 'localhost', '145.223.85.248','http://145.223.85.248.sslip.io']
 
 
 # Application definition
