@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters%}
+{% block content %}
+<div class="container py-5 d-flex justify-content-center align-items-center vh-100">
+    <div 
+        class="card shadow-lg p-5 animate__animated animate__fadeIn" 
+        style="width: 100%; max-width: 800px; border-radius: 1rem; background: linear-gradient(to bottom right, #ffffff, #f4f7fa);">
+        
+        <!-- Greeting -->
+        <div class="text-center mb-4">
+            <h2 class="text-primary fw-bold">
+                <i class="bi bi-person-circle"></i> Welcome, {{ request.user.first_name }}!
+            </h2>
+            <p class="text-muted">Please update your details below:</p>
+        </div>
+
+        <!-- Form -->
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <div class="row gy-4"> <!-- gy-4 for vertical spacing -->
+                {% for field in form.visible_fields %}
+                <div class="col-md-6">
+                    <label 
+                        class="form-label fw-bold text-secondary d-block mb-2">
+                        <i class="bi bi-pencil-square"></i> {{ field.label }}
+                    </label>
+                    {{ field|add_class:"form-control rounded-pill shadow-sm" }}
+                    {% if field.help_text %}
+                        <small class="form-text text-muted">{{ field.help_text }}</small>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            <button 
+                type="submit" 
+                class="btn btn-primary w-100 py-3 mt-4 rounded-pill shadow-sm submit-btn">
+                <i class="bi bi-save"></i> Save Details
+            </button>
+        </form>
+
+        <!-- Logout Button -->
+        <div class="mt-4 text-center">
+            <form method="POST" action="{% url 'member_logout' %}">
+                {% csrf_token %}
+                <button 
+                    type="submit" 
+                    class="btn btn-danger w-100 py-3 rounded-pill shadow-sm logout-btn">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

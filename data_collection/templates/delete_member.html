@@ -1,0 +1,14 @@
+<!-- delete_member.html -->
+{% extends 'base.html' %}
+{% load static %}
+{% block content %}
+  <div class="container">
+    <h2>Delete Member: {{ member.first_name }} {{ member.last_name }}</h2>
+    <p>Are you sure you want to delete this member's details?</p>
+    <form method="POST">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-danger">Delete</button>
+      <a href="{% url 'monitor_dashboard' %}" class="btn btn-secondary">Cancel</a>
+    </form>
+  </div>
+{% endblock %}

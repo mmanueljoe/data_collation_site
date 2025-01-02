@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+<div class="container vh-100 d-flex justify-content-center align-items-center">
+    <div class="card shadow-lg p-4 animate__animated animate__fadeIn" 
+         style="width: 100%; max-width: 800px; border-radius: 1rem; background: linear-gradient(to bottom right, #ffffff, #f8f9fa);">
+        <h2 class="text-center text-primary mb-4">
+            <i class="bi bi-pencil-square"></i> Edit Member: {{ member.first_name }} {{ member.last_name }}
+        </h2>
+
+        <form method="POST" enctype="multipart/form-data" class="animate__animated animate__fadeInUp">
+            {% csrf_token %}
+
+            <!-- Render Form Fields -->
+            <div class="mb-3">
+                <label for="first_name" class="form-label">
+                    <i class="bi bi-person"></i> First Name
+                </label>
+                {{ form.first_name|add_class:"form-control rounded-pill" }}
+            </div>
+
+            <div class="mb-3">
+                <label for="last_name" class="form-label">
+                    <i class="bi bi-person"></i> Last Name
+                </label>
+                {{ form.last_name|add_class:"form-control rounded-pill" }}
+            </div>
+
+            <div class="mb-3">
+                <label for="phone" class="form-label">
+                    <i class="bi bi-phone"></i> Phone Number
+                </label>
+                {{ form.phone|add_class:"form-control rounded-pill" }}
+            </div>
+
+            <div class="mb-3">
+                <label for="photo" class="form-label">
+                    <i class="bi bi-camera"></i> Photo
+                </label>
+                {{ form.photo|add_class:"form-control rounded-pill" }}
+            </div>
+
+            <!-- Disabled Fields -->
+            <div class="mb-3">
+                <label for="email" class="form-label">
+                    <i class="bi bi-envelope"></i> Email
+                </label>
+                <input type="email" class="form-control rounded-pill" value="{{ member.user.email }}" disabled>
+            </div>
+
+            <div class="mb-3">
+                <label for="agent_code" class="form-label">
+                    <i class="bi bi-key"></i> Agent Code
+                </label>
+                <input type="text" class="form-control rounded-pill" value="{{ member.agent_code }}" disabled>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="d-flex justify-content-between mt-4">
+                <button type="submit" class="btn btn-primary w-50 me-2 shadow rounded-pill">
+                    <i class="bi bi-save"></i> Save Changes
+                </button>
+                <a href="{% url 'member_dashboard' %}" class="btn btn-secondary w-50 shadow rounded-pill">
+                    <i class="bi bi-x-circle"></i> Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

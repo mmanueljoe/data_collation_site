@@ -1,0 +1,66 @@
+# Python
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.db
+*.sqlite3
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+
+# Django
+*.log
+*.pot
+*.pyc
+*.pyo
+*.db
+*.sqlite3
+media/
+static/
+
+# Environment
+.env
+.vscode/
+.idea/
+*.env
+*.env.*
+.venv/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Node
+node_modules/
+
+# Coverage
+.coverage
+.coverage.*
+*.cover
+*.coverage.*
+.cache/
+
+# MyPy
+.mypy_cache/
+
+# VSCode
+.vscode/
+
+# Pytest
+.cache/
+*.iml
+
+# Jupyter Notebooks
+.ipynb_checkpoints/
+
+# Misc
+*.bak
+*.swp
+*.swo

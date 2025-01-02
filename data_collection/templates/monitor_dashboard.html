@@ -1,0 +1,200 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load custom_filters %}
+{% block content %}
+<div class="container mt-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="text-primary">
+                <i class="bi bi-speedometer"></i> Monitor Dashboard
+            </h2>
+            <p class="text-muted">Welcome, <strong>{{ request.user.first_name }}</strong>! Manage member details and view analytics.</p>
+        </div>
+        <!-- Logout Button -->
+        <form method="POST" action="{% url 'monitor_logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-danger">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+        </form>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="card shadow-sm p-4 mb-4">
+        <form method="GET" action="{% url 'monitor_dashboard' %}" class="row g-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text"><i class="bi bi-search"></i></span>
+                    <input type="text" name="search" class="form-control" placeholder="Search by name, phone, or email" value="{{ request.GET.search }}">
+                </div>
+            </div>
+            <div class="col-md-6 text-end">
+                <a href="{% url 'export_excel' %}?search={{ request.GET.search }}" class="btn btn-success me-2">
+                    <i class="bi bi-file-earmark-excel"></i> Export to Excel
+                </a>
+                <a href="{% url 'export_pdf' %}?search={{ request.GET.search }}" class="btn btn-danger">
+                    <i class="bi bi-file-earmark-pdf"></i> Export to PDF
+                </a>
+            </div>
+        </form>
+        <hr class="mt-4">
+        <form method="GET" action="{% url 'monitor_dashboard' %}" class="row g-3">
+            <div class="col-md-4">
+                <label for="occupation" class="form-label">
+                    <i class="bi bi-briefcase"></i> Occupation
+                </label>
+                <select name="occupation" class="form-control">
+                    <option value="">All</option>
+                    {% for occupation in occupations %}
+                    <option value="{{ occupation }}" {% if request.GET.occupation == occupation %}selected{% endif %}>{{ occupation }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label for="ndc_membership_status" class="form-label">
+                    <i class="bi bi-person-badge"></i> Membership Status
+                </label>
+                <select name="ndc_membership_status" class="form-control">
+                    <option value="">All</option>
+                    <option value="1" {% if request.GET.ndc_membership_status == "1" %}selected{% endif %}>NDC Member</option>
+                    <option value="0" {% if request.GET.ndc_membership_status == "0" %}selected{% endif %}>Non-Member</option>
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-funnel"></i> Apply Filters
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Members Table -->
+    <div class="card shadow-sm p-4">
+        <h5><i class="bi bi-table"></i> Member Details</h5>
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th><i class="bi bi-person"></i> Name</th>
+                        <th><i class="bi bi-telephone"></i> Phone</th>
+                        <th><i class="bi bi-envelope"></i> Email</th>
+                        <th><i class="bi bi-calendar"></i> Age</th>
+                        <th><i class="bi bi-person-badge"></i> Party Member</th>
+                        <th><i class="bi bi-gear"></i> Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr>
+                        <td>{{ member.first_name }} {{ member.last_name }}</td>
+                        <td>{{ member.phone_number }}</td>
+                        <td>{{ member.email }}</td>
+                        <td>{{ member.age }}</td>
+                        <td>{{ member.ndc_membership_status|yesno:"Yes,No" }}</td>
+                        <td>
+                            <a href="{% url 'edit_member' member.id %}" class="btn btn-sm btn-warning">
+                                <i class="bi bi-pencil-square"></i> Edit
+                            </a>
+                            <a href="{% url 'delete_member' member.id %}" class="btn btn-sm btn-danger">
+                                <i class="bi bi-trash"></i> Delete
+                            </a>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center">No members found.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        <nav class="mt-3">
+            <ul class="pagination justify-content-center">
+                {% if members.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ members.previous_page_number }}">
+                        <i class="bi bi-arrow-left"></i> Previous
+                    </a>
+                </li>
+                {% endif %}
+                <li class="page-item disabled">
+                    <span class="page-link">{{ members.number }} of {{ members.paginator.num_pages }}</span>
+                </li>
+                {% if members.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ members.next_page_number }}">
+                        Next <i class="bi bi-arrow-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <h5><i class="bi bi-bar-chart"></i> Age Group Distribution</h5>
+            <canvas id="ageGroupChart"></canvas>
+        </div>
+        <div class="col-md-6">
+            <h5><i class="bi bi-pie-chart"></i> Party Membership Distribution</h5>
+            <canvas id="partyMembershipChart"></canvas>
+        </div>
+    </div>
+</div>
+
+<script id="age-groups-keys" type="application/json">{{ age_groups.keys|json_script }}</script>
+<script id="age-groups-values" type="application/json">{{ age_groups.values|json_script }}</script>
+<script id="membership-data" type="application/json">{{ ndc_count }}, {{ non_ndc_count }}</script>
+
+<script>
+    // Age Group Chart
+    const ageLabels = JSON.parse(document.getElementById('age-groups-keys').textContent);
+    const ageData = JSON.parse(document.getElementById('age-groups-values').textContent);
+    const ageGroupChartCtx = document.getElementById('ageGroupChart').getContext('2d');
+    new Chart(ageGroupChartCtx, {
+        type: 'bar',
+        data: {
+            labels: ageLabels,
+            datasets: [{
+                label: 'Members by Age Group',
+                data: ageData,
+                backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            }
+        }
+    });
+
+    // Party Membership Chart
+    const membershipData = JSON.parse(document.getElementById('membership-data').textContent);
+    const partyMembershipChartCtx = document.getElementById('partyMembershipChart').getContext('2d');
+    new Chart(partyMembershipChartCtx, {
+        type: 'pie',
+        data: {
+            labels: ['NDC Members', 'Non-Members'],
+            datasets: [{
+                label: 'Party Membership Distribution',
+                data: membershipData,
+                backgroundColor: ['rgba(75, 192, 192, 0.6)', 'rgba(255, 99, 132, 0.6)'],
+                borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+        }
+    });
+</script>
+{% endblock %}
